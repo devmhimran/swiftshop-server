@@ -66,6 +66,19 @@ async function run() {
             res.send(data);
         });
 
+        app.get('/product/:id', async (req, res) => {
+            const productId = req.params.id;
+            const productQuery = {  _id: new ObjectId(productId) };
+            const singleProduct = await productsCollection.findOne(productQuery);
+            res.send(singleProduct);
+          });
+
+        app.post('/customer', verifyJWT, async (req, res) => {
+            const addData = req.body;
+            const result = await customersCollection.insertOne(addData)
+            res.send(result)
+        })
+
         app.post('/product', verifyJWT, async (req, res) => {
             const addData = req.body;
             const result = await productsCollection.insertOne(addData)
@@ -74,7 +87,6 @@ async function run() {
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
-            console.log(email)
             const user = req.body;
             const filter = { email: email };
             const options = { upsert: true };
