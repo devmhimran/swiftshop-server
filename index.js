@@ -52,9 +52,16 @@ async function run() {
             res.send(data);
         });
 
+        app.get('/orders', async (req, res) => {
+            const query = {};
+            const cursor = ordersCollection.find(query);
+            const data = await cursor.toArray();
+            res.send(data);
+        });
+
         app.get('/customersCollection', async (req, res) => {
             const query = {};
-            const cursor = productsCollection.find(query);
+            const cursor = customersCollection.find(query);
             const data = await cursor.toArray();
             res.send(data);
         });
