@@ -52,6 +52,13 @@ async function run() {
             res.send(data);
         });
 
+        app.get('/customersCollection', async (req, res) => {
+            const query = {};
+            const cursor = productsCollection.find(query);
+            const data = await cursor.toArray();
+            res.send(data);
+        });
+
         app.post('/product', verifyJWT, async (req, res) => {
             const addData = req.body;
             const result = await productsCollection.insertOne(addData)
