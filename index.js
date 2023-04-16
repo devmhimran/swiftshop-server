@@ -59,19 +59,26 @@ async function run() {
             res.send(data);
         });
 
-        app.get('/customersCollection', async (req, res) => {
+        app.get('/customers', verifyJWT, async (req, res) => {
             const query = {};
             const cursor = customersCollection.find(query);
             const data = await cursor.toArray();
             res.send(data);
         });
 
+        app.get('/customer/:id', verifyJWT, async (req, res) => {
+            const customerId = req.params.id;
+            const customerQuery = { _id: new ObjectId(customerId) };
+            const singleCustomer = await customersCollection.findOne(customerQuery);
+            res.send(singleCustomer);
+        });
+
         app.get('/product/:id', async (req, res) => {
             const productId = req.params.id;
-            const productQuery = {  _id: new ObjectId(productId) };
+            const productQuery = { _id: new ObjectId(productId) };
             const singleProduct = await productsCollection.findOne(productQuery);
             res.send(singleProduct);
-          });
+        });
 
         app.post('/customer', verifyJWT, async (req, res) => {
             const addData = req.body;
@@ -96,6 +103,13 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updateDoc, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, { expiresIn: '24h' });
             res.send({ result, token });
+        })
+
+        app.delete('/product/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const product = await productsCollection.deleteOne(query);
+            res.send(order);
         })
 
     } finally {
