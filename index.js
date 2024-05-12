@@ -135,7 +135,6 @@ async function run() {
 
     app.delete("/product/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      // const query = { _id: ObjectId(id) };
       const product = await productsCollection.deleteOne({
         _id: new ObjectId(id),
       });
