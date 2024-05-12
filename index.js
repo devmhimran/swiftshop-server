@@ -135,9 +135,11 @@ async function run() {
 
     app.delete("/product/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const product = await productsCollection.deleteOne(query);
-      res.send(order);
+      // const query = { _id: ObjectId(id) };
+      const product = await productsCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(product);
     });
   } finally {
     // Ensures that the client will close when you finish/error
