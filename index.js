@@ -49,11 +49,59 @@ async function run() {
       res.send(data);
     });
 
-    app.get("/orders", async (req, res) => {
+    app.get("/product/:id", async (req, res) => {
+      const productId = req.params.id;
+      const productQuery = { _id: new ObjectId(productId) };
+      const singleProduct = await productsCollection.findOne(productQuery);
+      res.send(singleProduct);
+    });
+
+    app.delete("/product/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const product = await productsCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(product);
+    });
+    app.get("/allOrders", verifyJWT, async (req, res) => {
       const query = {};
       const cursor = ordersCollection.find(query);
-      const data = await cursor.toArray();
-      res.send(data);
+      const orders = await cursor.toArray();
+      res.send(orders);
+    });
+    app.post("/order", verifyJWT, async (req, res) => {
+      const order = req.body;
+      const result = await ordersCollection.insertOne(order);
+      res.send(result);
+    });
+    app.get("/orders", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const order = await ordersCollection.find({ email: email }).toArray();
+      res.send(order);
+    });
+    app.get("/order/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const order = await ordersCollection.findOne(query);
+      res.send(order);
+    });
+
+    app.put("/order-quantity/:id", verifyJWT, async (req, res) => {
+      const productId = req.params.id;
+      const productQuantity = req.body;
+      const filter = { _id: new ObjectId(productId) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          quantity: productQuantity.quantity,
+        },
+      };
+      const updatedResult = await productsCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      res.send(updatedResult);
     });
 
     app.get("/customers", verifyJWT, async (req, res) => {
@@ -131,15 +179,6 @@ async function run() {
       const user = await usersCollection.findOne({ email: email });
       const adminCheck = user.role === "admin";
       res.send({ admin: adminCheck });
-    });
-
-    app.delete("/product/:id", verifyJWT, async (req, res) => {
-      const id = req.params.id;
-      // const query = { _id: ObjectId(id) };
-      const product = await productsCollection.deleteOne({
-        _id: new ObjectId(id),
-      });
-      res.send(product);
     });
   } finally {
     // Ensures that the client will close when you finish/error
