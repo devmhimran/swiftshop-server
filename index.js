@@ -71,7 +71,11 @@ async function run() {
     });
     app.post("/order", verifyJWT, async (req, res) => {
       const order = req.body;
-      const result = await ordersCollection.insertOne(order);
+      let payload = {
+        ...order,
+        createdAt: new Date(),
+      };
+      const result = await ordersCollection.insertOne(payload);
       res.send(result);
     });
     app.get("/orders", verifyJWT, async (req, res) => {
@@ -102,6 +106,32 @@ async function run() {
         options
       );
       res.send(updatedResult);
+    });
+
+    app.put("/order-status/:id", verifyJWT, async (req, res) => {
+      try {
+        const orderId = req.params.id;
+        const { status } = req.body; // Assuming the request body contains the new status
+        console.log({ status, orderId });
+        // Update the order status in the database
+        const filter = { _id: new ObjectId(orderId) };
+        const updateDoc = {
+          $set: { status: status },
+        };
+        const updatedOrder = await ordersCollection.updateOne(
+          filter,
+          updateDoc
+        );
+
+        if (updatedOrder.modifiedCount === 0) {
+          return res.status(404).send({ message: "Order not found" });
+        }
+
+        res.send(updatedOrder);
+      } catch (error) {
+        console.error("Error updating order status:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+      }
     });
 
     app.get("/customers", verifyJWT, async (req, res) => {
@@ -137,6 +167,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/all-users", verifyJWT, async (req, res) => {
+      const query = {};
+      const cursor = usersCollection.find(query);
+      const data = await cursor.toArray();
+      res.send(data);
+    });
+
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -156,16 +193,19 @@ async function run() {
       res.send({ result, token });
     });
 
-    app.put("/user/admin/:email", verifyJWT, async (req, res) => {
-      const email = req.params.email;
+    app.put("/user/admin/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const role = req.body.role;
       const adminRequest = req.decoded.email;
-      const adminRequestAccount = await userCollection.findOne({
+
+      console.log({ id, role, adminRequest });
+      const adminRequestAccount = await usersCollection.findOne({
         email: adminRequest,
       });
       if (adminRequestAccount.role === "admin") {
-        const filter = { email: email };
+        const filter = { _id: new ObjectId(id) };
         const updateDoc = {
-          $set: { role: "admin" },
+          $set: { role },
         };
         const result = await usersCollection.updateOne(filter, updateDoc);
         res.send(result);
